@@ -20,6 +20,8 @@ function init(){
     var monsterWidth = canvas.width / 5 * 3;
     var monsterHeight = canvas.height / 3 ;
 
+    var mouthRadius = 120;
+
     // EVENT LISTENERS
     canvas.addEventListener('mousemove',function(event){
         mouseX = event.clientX;
@@ -31,7 +33,7 @@ function init(){
         canvas.height = window.innerHeight;
         monsterWidth = canvas.width / 5 * 4;
         monsterHeight = canvas.height / 3 * 1;
-        monsterHead(50, canvas.height);
+        createMonster(100, canvas.height);
     });
 
     // DRAW BACKGROUND
@@ -47,25 +49,14 @@ function init(){
         ctx.fillRect(1800,canvas.height,300,-200);
     }
 
-    function monsterHead(originX, originY){
-        // SHADOW
-        ctx.beginPath();
-        ctx.fillStyle = '#872C42';
-        ctx.moveTo(originX-50, originY);
-        ctx.quadraticCurveTo(originX, monsterHeight, monsterWidth / 2 + originX / 5, monsterHeight);
-        ctx.quadraticCurveTo(monsterWidth + originX, monsterHeight,  monsterWidth + originX , originY);
-        ctx.fill();
+    function createMonster(originX, originY){
 
-        // HEAD
-        ctx.beginPath();
-        ctx.fillStyle = '#BA3C5B';
-        ctx.moveTo(originX, originY);
-        ctx.quadraticCurveTo(originX, monsterHeight, monsterWidth / 2 + originX / 5, monsterHeight);
-        ctx.quadraticCurveTo(monsterWidth + originX, monsterHeight,  monsterWidth + originX , originY);
-        ctx.fill();
+        // DRAW MONSTER HEAD
+        drawHead(originX, originY);
 
         // LEFT EYE
         drawEye(originX + monsterWidth / 4, originY - monsterHeight, 100, 20);
+
         // RIGHT EYE
         drawEye(originX + monsterWidth / 6 * 4, originY - monsterHeight / 5 * 7, 100, 30);
 
@@ -74,79 +65,147 @@ function init(){
 
         // LEFT TENTACLE
         drawTentacle(originX-150, originY);
+
         // RIGHT TENTACLE
         drawTentacle(originX + monsterWidth - 50, originY);
     }
 
+    function drawHead(originX, originY){
+        // SHADOW
+        ctx.beginPath();
+        ctx.fillStyle = '#872C42';
+        ctx.moveTo(originX-50, originY);
+        ctx.quadraticCurveTo(originX - originX / 4, monsterHeight, monsterWidth / 2 + originX / 5, monsterHeight);
+        ctx.quadraticCurveTo(monsterWidth + originX, monsterHeight,  monsterWidth + originX , originY);
+        ctx.fill();
+
+        // HEAD
+        ctx.beginPath();
+        ctx.fillStyle = '#BA3C5B';
+        ctx.moveTo(originX, originY);
+        ctx.quadraticCurveTo(originX - originX / 4, monsterHeight, monsterWidth / 2 + originX / 5, monsterHeight);
+        ctx.quadraticCurveTo(monsterWidth + originX, monsterHeight,  monsterWidth + originX , originY);
+        ctx.fill();
+    }
+
     function drawMouth(originX, originY){
+        let mouthCenterX = originX + monsterWidth / 2;
+        let mouthCenterY = canvas.height;
+
+        // LIP
+        ctx.beginPath();
+        ctx.fillStyle = '#872C42';
+        ctx.arc(mouthCenterX + 10, mouthCenterY, mouthRadius + 10,0,2*Math.PI);
+        ctx.fill();
+
+        // MOUTH
         ctx.beginPath();
         ctx.fillStyle = 'black';
-        ctx.arc(originX + monsterWidth/2, originY, 120,0,2*Math.PI);
+        ctx.arc(mouthCenterX, mouthCenterY, mouthRadius,0,2*Math.PI);
         ctx.fill();
     }
 
     function drawEye(originX, originY, eyeRadius, pupilRadius){
-        this.EyeX = originX;
-        this.EyeY = originY;
-
-        this.PupilX = 0;
-        this.PupilY = 0;
-
-        this.EyeRadius = eyeRadius;
-        this.PupilRadius = pupilRadius;
+        let pupilX = 0;
+        let pupilY = 0;
 
         var pupilOffset = 1.2; /* TO OFFSET PUPIL FROM EDGE OF EYE BALL */
 
         // TOP LEFT
-        if(mouseX < this.EyeX && mouseY < this.EyeY){
-            let a = this.EyeY - mouseY;
-            let b = this.EyeX - mouseX;
+        if(mouseX < originX && mouseY <= originY){
+            let a = originY - mouseY;
+            let b = originX - mouseX;
             let tan = a / b;
             let angle = Math.atan(tan);
-            this.PupilY =  - Math.sin(angle) * (this.EyeRadius - this.PupilRadius * pupilOffset);
-            this.PupilX =  - Math.cos(angle) * (this.EyeRadius - this.PupilRadius * pupilOffset);
+
+            // CHECK IF MOUSE IS INSIDE THE EYEBALL
+            let mouseOffsetFromCenter = (originY - mouseY) / Math.sin(angle);
+            if(isNaN(mouseOffsetFromCenter) && mouseX > eyeRadius - pupilRadius * pupilOffset){
+                mouseOffsetFromCenter = 1;
+            }
+
+            if(mouseOffsetFromCenter < eyeRadius - pupilRadius * pupilOffset){
+                pupilX = mouseX - originX;
+                pupilY = mouseY - originY;
+            }else{
+                pupilY =  - Math.sin(angle) * (eyeRadius - pupilRadius * pupilOffset);
+                pupilX =  - Math.cos(angle) * (eyeRadius - pupilRadius * pupilOffset);
+            };
+
         // TOP RIGHT
-        }else if(mouseX > this.EyeX && mouseY < this.EyeY){
-            let a = this.EyeY - mouseY;
-            let b = mouseX - this.EyeX;
+    }else if(mouseX > originX && mouseY <= originY){
+            let a = originY - mouseY;
+            let b = mouseX - originX;
             let tan = a / b;
             let angle = Math.atan(tan);
-            this.PupilY =  - Math.sin(angle) * (this.EyeRadius - this.PupilRadius * pupilOffset);
-            this.PupilX = Math.cos(angle) * (this.EyeRadius - this.PupilRadius * pupilOffset);
+
+            // CHECK IF MOUSE IS INSIDE THE EYEBALL
+            let mouseOffsetFromCenter = (originY - mouseY) / Math.sin(angle);
+            if(isNaN(mouseOffsetFromCenter) && mouseX < originX + eyeRadius){
+                mouseOffsetFromCenter = 1;
+            }
+
+            if(mouseOffsetFromCenter <= eyeRadius - pupilRadius * pupilOffset){
+                pupilX = mouseX - originX;
+                pupilY = mouseY - originY;
+            }else{
+                pupilY =  - Math.sin(angle) * (eyeRadius - pupilRadius * pupilOffset);
+                pupilX = Math.cos(angle) * (eyeRadius - pupilRadius * pupilOffset);
+            }
+
         // BOTTOM RIGHT
-        }else if(mouseX > this.EyeX && mouseY > this.EyeY){
-            let a = mouseY - this.EyeY;
-            let b = mouseX - this.EyeX;
+    }else if(mouseX > originX && mouseY > originY){
+            let a = mouseY - originY;
+            let b = mouseX - originX;
             let tan = a / b;
             let angle = Math.atan(tan);
-            this.PupilY = Math.sin(angle) * (this.EyeRadius - this.PupilRadius * pupilOffset);
-            this.PupilX = Math.cos(angle) * (this.EyeRadius - this.PupilRadius * pupilOffset);
-        // BOTTOM this.
-        }else if(mouseX < this.EyeX && mouseY > this.EyeY){
-            let a = mouseY - this.EyeY;
-            let b = mouseX - this.EyeX;
+
+            // CHECK IF MOUSE IS INSIDE THE EYEBALL
+            let mouseOffsetFromCenter = (mouseY - originY) / Math.sin(angle);
+
+            if(mouseOffsetFromCenter < eyeRadius - pupilRadius * pupilOffset){
+                pupilX = mouseX - originX;
+                pupilY = mouseY - originY;
+            }else{
+                pupilY = Math.sin(angle) * (eyeRadius - pupilRadius * pupilOffset);
+                pupilX = Math.cos(angle) * (eyeRadius - pupilRadius * pupilOffset);
+            }
+
+        // BOTTOM LEFT
+        }else if(mouseX < originX && mouseY > originY){
+            let a = mouseY - originY;
+            let b = mouseX - originX;
             let tan = a / b;
             let angle = Math.atan(tan);
-            this.PupilY = - Math.sin(angle) * (this.EyeRadius - this.PupilRadius * pupilOffset);
-            this.PupilX = - Math.cos(angle) * (this.EyeRadius - this.PupilRadius * pupilOffset);
+
+            // CHECK IF MOUSE IS INSIDE THE EYEBALL
+            let mouseOffsetFromCenter = (originY - mouseY) / Math.sin(angle);
+
+            if(mouseOffsetFromCenter < eyeRadius - pupilRadius * pupilOffset){
+                pupilX = mouseX - originX;
+                pupilY = mouseY - originY;
+            }else{
+                pupilY = - Math.sin(angle) * (eyeRadius - pupilRadius * pupilOffset);
+                pupilX = - Math.cos(angle) * (eyeRadius - pupilRadius * pupilOffset);
+            }
         }
 
         // SHADOW
         ctx.beginPath();
         ctx.fillStyle = '#872C42';
-        ctx.arc(this.EyeX, this.EyeY + 15, this.EyeRadius,0,2*Math.PI);
+        ctx.arc(originX, originY + 15, eyeRadius,0,2*Math.PI);
         ctx.fill();
 
         // EYE BALL
         ctx.beginPath();
         ctx.fillStyle = 'white';
-        ctx.arc(this.EyeX, this.EyeY, this.EyeRadius,0,2*Math.PI);
+        ctx.arc(originX, originY, eyeRadius,0,2*Math.PI);
         ctx.fill();
 
         // EYE PUPIL
         ctx.beginPath();
         ctx.fillStyle = 'black';
-        ctx.arc(this.EyeX + this.PupilX, this.EyeY + this.PupilY, this.PupilRadius, 0, 2 * Math.PI);
+        ctx.arc(originX + pupilX, originY + pupilY, pupilRadius, 0, 2 * Math.PI);
         ctx.fill();
     }
 
@@ -193,7 +252,7 @@ function init(){
         drawBackground();
 
         // DRAW MONSTER
-        monsterHead(monsterOriginX, monsterOriginY);
+        createMonster(monsterOriginX, monsterOriginY);
     }
 
     // MAIN ANIMATION LOOP
